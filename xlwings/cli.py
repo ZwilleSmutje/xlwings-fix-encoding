@@ -538,8 +538,8 @@ def copy_code(fpath):
             sys.exit(
                 'Please install either "pandas" or "pyperclip" to use the copy command.'
             )
-
-    with open(fpath, "r", encoding="utf-8") as f:
+            
+    with open(fpath, "r",  encoding="cp1252", errors="replace") as f:
         if "bas" in str(fpath):
             text = (
                 f.read()
@@ -757,7 +757,8 @@ def export_vba_modules(book, overwrite=False):
                 if vb_component.Type == 100:
                     # Remove the meta info so it can be distinguished from regular
                     # classes when running "xlwings vba import"
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    
+                    with open(file_path, "r", encoding="cp1252", errors="replace") as f:
                         exported_code = f.readlines()
                     with open(file_path, "w", encoding="utf-8") as f:
                         f.writelines(exported_code[9:])
@@ -811,8 +812,12 @@ def vba_import(args):
                 pass
             book.api.VBProject.VBComponents.Import(path)
         elif path.suffix in (".cls", ".frm"):
-            with open(path, "r", encoding="utf-8") as f:
+
+
+            with open(path, "r", encoding="cp1252", errors="replace") as f:
                 vba_code = f.readlines()
+
+
             if vba_code:
                 if vba_code[0].startswith("VERSION "):
                     # For frm, this also imports frx, unlike in editing mode
@@ -868,8 +873,12 @@ def vba_edit(args):
             module_type = path_to_type[path]
             vb_component = book.api.VBProject.VBComponents(module_name)
             if change_type == Change.modified:
-                with open(path, "r", encoding="utf-8") as f:
+
+                
+                with open(path, "r", encoding="cp1252", errors="replace") as f:
                     vba_code = f.readlines()
+
+
                 line_count = vb_component.CodeModule.CountOfLines
                 if line_count > 0:
                     vb_component.CodeModule.DeleteLines(1, line_count)
