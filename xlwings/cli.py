@@ -14,6 +14,19 @@ import xlwings as xw
 # Directories/paths
 this_dir = Path(__file__).resolve().parent
 
+# ---- Encoding helper ----
+def _read_text_auto(path: Path) -> str:
+    """
+    Versucht UTF-8 (mit/ohne BOM), fällt dann auf CP1252 zurück.
+    So können wir Dateien aus VS Code (UTF-8) und alte Exporte (ANSI) verarbeiten.
+    """
+    for enc in ("utf-8-sig", "utf-8", "cp1252"):
+        try:
+            return Path(path).read_text(encoding=enc)
+        except UnicodeDecodeError:
+            continue
+    # letzter Ausweg: verlustbehaftet, aber keine Exceptions
+    return Path(path).read_text(encoding="latin-1", errors="replace")
 
 def auth_aad(args):
     _auth_aad(
@@ -538,7 +551,7 @@ def copy_code(fpath):
             sys.exit(
                 'Please install either "pandas" or "pyperclip" to use the copy command.'
             )
-            
+    #GEÄNDERT
     with open(fpath, "r",  encoding="cp1252", errors="replace") as f:
         if "bas" in str(fpath):
             text = (
@@ -805,17 +818,27 @@ def vba_import(args):
 
     for path in Path(".").resolve().glob("*"):
         if path.suffix == ".bas":
+            # Modul holen oder neu anlegen
             try:
                 vb_component = book.api.VBProject.VBComponents(path.stem)
-                book.api.VBProject.VBComponents.Remove(vb_component)
             except pywintypes.com_error:
-                pass
-            book.api.VBProject.VBComponents.Import(path)
+                vb_component = book.api.VBProject.VBComponents.Add(1)  # 1 = vbext_ct_StdModule
+                vb_component.Name = path.stem
+
+            # Datei robust lesen (UTF-8 bevorzugt), Attribute-Zeilen nicht zurückschreiben
+            src = _read_text_auto(path)
+            lines = src.splitlines(True)
+            body = "".join(ln for ln in lines if not ln.lstrip().startswith("Attribute VB_"))
+
+            # Inhalt ersetzen
+            line_count = vb_component.CodeModule.CountOfLines
+            if line_count > 0:
+                vb_component.CodeModule.DeleteLines(1, line_count)
+            vb_component.CodeModule.AddFromString(body)
         elif path.suffix in (".cls", ".frm"):
 
 
-            with open(path, "r", encoding="cp1252", errors="replace") as f:
-                vba_code = f.readlines()
+            vba_code = _read_text_auto(path).splitlines(True)
 
 
             if vba_code:
@@ -874,9 +897,9 @@ def vba_edit(args):
             vb_component = book.api.VBProject.VBComponents(module_name)
             if change_type == Change.modified:
 
-                
-                with open(path, "r", encoding="cp1252", errors="replace") as f:
-                    vba_code = f.readlines()
+                #GEÄNDERT
+                src = _read_text_auto(Path(path))
+                vba_code = src.splitlines(True)
 
 
                 line_count = vb_component.CodeModule.CountOfLines
