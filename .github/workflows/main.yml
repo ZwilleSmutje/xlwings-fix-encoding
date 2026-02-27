@@ -137,13 +137,13 @@ jobs:
       fail-fast: false
       matrix:
         # abi3 wheels aren't supported as DateTime is not part of the ABI spec (PEP 384)
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         platform:
           [
             { os: "windows-latest", target: "x86_64" },
 
-            { os: "macos-13", target: "x86_64" },
-            { os: "macos-13", target: "aarch64" },
+            { os: "macos-15", target: "x86_64" },
+            { os: "macos-15", target: "aarch64" },
 
             { os: "ubuntu-latest", target: "x86_64" },
             { os: "ubuntu-latest", target: "any" },  # HACK: replace with WASM build
@@ -160,6 +160,12 @@ jobs:
               manylinux: "musllinux_1_1",
             },
           ]
+        exclude:
+          # Python 3.10 is incompatible with macos-15 (missing libintl.8.dylib)
+          - python-version: "3.10"
+            platform: { os: "macos-15", target: "x86_64" }
+          - python-version: "3.10"
+            platform: { os: "macos-15", target: "aarch64" }
 
     runs-on: ${{ matrix.platform.os }}
     steps:
@@ -230,7 +236,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Tests
-        if: matrix.platform.target == 'x86_64' && matrix.platform.manylinux != 'musllinux_1_1'
+        if: matrix.platform.target == 'x86_64' && matrix.platform.manylinux != 'musllinux_1_1' && !(matrix.platform.target == 'x86_64' && contains(matrix.platform.os, 'macos'))
         shell: bash
         env:
           XLWINGS_LICENSE_KEY: ${{ secrets.XLWINGS_LICENSE_KEY }}

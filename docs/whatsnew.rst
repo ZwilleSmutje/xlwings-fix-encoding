@@ -1,6 +1,36 @@
 Changelog
 =========
 
+v0.33.20 (Jan 21, 2025)
+------------------------
+
+* :bdg-info:`Enhancement` :bdg-secondary:`PRO` Allow to use top-level decorator imports on xlwings Server even if pywin32 is installed (:issue:`2669`).
+
+v0.33.19 (Dec 19, 2025)
+-----------------------
+
+* :bdg-info:`Enhancement` Improved the ``"json"`` converter by stripping off markdown formatting, which is common with LLM responses (:issue:`2663`).
+* :bdg-info:`Enhancement` Added support for ``ndim="natural"``. The key difference with the default behavior is that vertical Excel ranges, i.e., columns, preserve their orientation (``[[1], [2]]``, instead of ``[1, 2]``), see :ref:`converters:ndim`.
+
+v0.33.18 (Dec 14, 2025)
+-----------------------
+
+* :bdg-info:`Enhancement` Added new ``json`` converter to read and write values as JSON-formatted strings (:issue:`2657`).
+
+v0.33.17 (Dec 6, 2025)
+----------------------
+
+* :bdg-info:`Enhancement` Added a new ``tuple`` converter to turn values into tuple of tuples instead of list of lists (:issue:`2648`).
+* :bdg-info:`Enhancement` Better support for non-default locations of Conda envs (:issue:`2656`).
+* :bdg-danger:`Breaking Change` The ``@sub`` decorator is now called `@script` to be in line with xlwings Lite. ``@sub`` is deprecated (:issue:`2646`).
+
+v0.33.16 (Oct 10, 2025)
+-----------------------
+
+* :bdg-info:`Enhancement` Added support for Python 3.14 (:issue:`2643`).
+* :bdg-info:`Enhancement` xlwings CLI now has a ``--version`` / ``-v`` argument (:issue:`2644`).
+* :bdg-warning:`Bug Fix` Fix ``xw.App()`` on macOS so that commands like ``xw.view()`` work even if Excel isn't running yet (:issue:`2642`).
+
 v0.33.15 (May 2, 2025)
 ----------------------
 

@@ -34,12 +34,16 @@ Action                          **Range objects**                               
 Default Converter
 -----------------
 
-If no options are set, the following conversions are performed:
+If no options are set, the following default conversions are applied when accessing ``Range.value``:
 
-* single cells are read in as ``floats`` in case the Excel cell holds a number, as ``unicode`` in case it holds text,
-  as ``datetime`` if it contains a date and as ``None`` in case it is empty.
-* columns/rows are read in as lists, e.g. ``[None, 1.0, 'a string']``
-* 2d cell ranges are read in as list of lists, e.g. ``[[None, 1.0, 'a string'], [None, 2.0, 'another string']]``
+* Numbers -> ``floats``
+* Text -> ``str``
+* Date and/or time -> ``datetime``
+* ``TRUE`` or ``FALSE`` -> ``bool``
+* Empty cell -> ``None``
+* Windows only: Currency -> ``Decimal``, truncated to 4 decimals
+
+Columns/rows are read in as lists, e.g. ``[None, 1.0, 'a string']`` and 2d cell ranges are read in as list of lists, e.g. ``[[None, 1.0, 'a string'], [None, 2.0, 'another string']]``.
 
 The following options can be set:
 
@@ -61,6 +65,22 @@ Force the value to have either 1 or 2 dimensions regardless of the shape of the 
 [1.0 3.0]
 >>> sheet['A1:A2'].options(ndim=2).value
 [[1.0], [3.0]]
+
+To preserve the vertical orientation of columns, use ``ndim="natural"``. This returns scalars for
+single cells, 1D lists for horizontal ranges, and 2D lists for vertical or multi-row ranges:
+
+>>> sheet['A1'].value = 1
+>>> sheet['A1'].options(ndim="natural").value
+1.0
+>>> sheet['A1'].value = ["Industry", "Country", "Employees", "Revenue"]
+>>> sheet['A1:D1'].options(ndim="natural").value
+['Industry', 'Country', 'Employees', 'Revenue']
+>>> sheet['A1'].value = [["3M"], ["AbbVie"], ["Apple"]]
+>>> sheet['A1:A3'].options(ndim="natural").value  # Key difference to default
+[['3M'], ['AbbVie'], ['Apple']]
+>>> sheet['A1'].value = [[1, 2, 3], [4, 5, 6]]
+>>> sheet['A1:C2'].options(ndim="natural").value
+[[1, 2, 3], [4, 5, 6]]
 
 numbers
 ~~~~~~~
@@ -263,6 +283,24 @@ The dictionary converter turns two Excel columns into a dictionary. If the data 
 {'a': 1.0, 'b': 2.0}
 
 Note: instead of ``dict``, you can also use ``OrderedDict`` from ``collections``.
+
+Tuple converter
+~~~~~~~~~~~~~~~
+
+Get the values as (nested) tuples instead of (nested) lists. This can be helpful in connection with caching, as tuples are immutable and hashable.
+
+>>> sheet = xw.sheets.active
+>>> sheet['A1:B2'].options(tuple).value
+(('a', 1.0), ('b', 2.0))
+
+JSON converter
+~~~~~~~~~~~~~~
+
+Read and write values as JSON-formatted strings. This is especially useful to interact with LLMs.
+
+>>> sheet = xw.sheets.active
+>>> sheet['A1:C2'].options("json").value
+'[["2024-01-01T00:00:00", "text", true], [null, 42.0, false]]'
 
 Numpy array converter
 ~~~~~~~~~~~~~~~~~~~~~
